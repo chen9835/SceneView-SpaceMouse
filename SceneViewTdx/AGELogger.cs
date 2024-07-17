@@ -1,3 +1,18 @@
+// COPYRIGHT © 2024 ESRI
+//
+// TRADE SECRETS: ESRI PROPRIETARY AND CONFIDENTIAL
+// Unpublished material - all rights reserved under the
+// Copyright Laws of the United States and applicable international
+// laws, treaties, and conventions.
+//
+// For additional information, contact:
+// Environmental Systems Research Institute, Inc.
+// Attn: Contracts and Legal Services Department
+// 380 New York Street
+// Redlands, California, 92373
+// USA
+//
+// email: contracts@esri.com
 
 using log4net;
 using log4net.Appender;
@@ -6,7 +21,7 @@ using log4net.Layout;
 using log4net.Repository.Hierarchy;
 using System.Reflection;
 
-namespace RuntimeSDKTest
+namespace SceneViewTdx
 {
     internal class AGELogger
     {
