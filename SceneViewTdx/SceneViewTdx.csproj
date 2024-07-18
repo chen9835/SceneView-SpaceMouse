@@ -30,4 +30,16 @@
     <PackageReference Include="log4net" Version="2.0.12" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="TDx.SpaceMouse.Navigation3D">
+      <HintPath>3rdParty\TDX\TDx.SpaceMouse.Navigation3D.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="3rdParty\TDX\TDx.SpaceMouse.Navigation3D.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

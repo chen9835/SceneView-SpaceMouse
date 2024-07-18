@@ -1,16 +1,9 @@
 ﻿
 using System;
-using System.IO;
 using System.Windows;
-using System.Numerics;
 
 using Esri.ArcGISRuntime.Geometry;
 using Esri.ArcGISRuntime.Mapping;
-using Esri.ArcGISRuntime.Symbology;
-using Esri.ArcGISRuntime.UI;
-using Esri.ArcGISRuntime.UI.Controls;
-using System.Windows.Media;
-using System.Windows.Input;
 
 namespace RuntimeSDKTest
 {
@@ -23,6 +16,8 @@ namespace RuntimeSDKTest
 
         private readonly string _elevationServiceUrl = "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer";
 
+        private TDxSpaceMouseNavigationController _navigationController = null;
+
         public MainWindow()
         {
             try
@@ -32,6 +27,13 @@ namespace RuntimeSDKTest
                 AGELogger.GetInst().Debug("-----Success Initialize Component-------");
                 InitializeSceneView();
                 AGELogger.GetInst().Debug("-----Success Initialize SceneView logic-------");
+
+                this.Loaded += (s, e) =>
+                {
+                    _navigationController = new TDxSpaceMouseNavigationController(MySceneView);
+                    _navigationController.Profile = Application.Current.MainWindow.Title;
+                    _navigationController.Enable = true;
+                };
             }
             catch (Exception ex)
             {
@@ -57,33 +59,6 @@ namespace RuntimeSDKTest
             MapPoint initialLocation = new MapPoint(-119.9489, 46.7592, 0, SpatialReferences.Wgs84);
             Camera initialCamera = new Camera(initialLocation, 15000, 40, 60, 0);
             MySceneView.SetViewpointCamera(initialCamera);
-
-            MySceneView.GeoViewTapped += MySceneView_GeoViewTapped;
-            MySceneView.GeoViewDoubleTapped += MySceneView_GeoViewDoubleTapped;
-        }
-
-        private void MySceneView_GeoViewDoubleTapped(object sender, GeoViewInputEventArgs e)
-        {
-            AGELogger.GetInst().Debug("-----GeoViewDoubleTapped-------");
-            System.Diagnostics.Debug.WriteLine("-----GeoViewDoubleTapped-------");
-
-            MapPoint mapPoint = MySceneView.ScreenToBaseSurface(Mouse.GetPosition(MySceneView));
-            if (mapPoint != null)
-            {
-                System.Diagnostics.Debug.WriteLine(string.Format("-----location:{0},{1},{2}-------", mapPoint.X, mapPoint.Y, mapPoint.Z));
-            }
-        }
-
-        private void MySceneView_GeoViewTapped(object sender, GeoViewInputEventArgs e)
-        {
-            AGELogger.GetInst().Debug("-----GeoViewTapped-------");
-            System.Diagnostics.Debug.WriteLine("-----GeoViewTapped-------");
-
-            MapPoint mapPoint = MySceneView.ScreenToBaseSurface(Mouse.GetPosition(MySceneView));
-            if (mapPoint != null)
-            {
-                System.Diagnostics.Debug.WriteLine(string.Format("-----location:{0},{1},{2}-------", mapPoint.X, mapPoint.Y, mapPoint.Z));
-            }
         }
     }
 }
