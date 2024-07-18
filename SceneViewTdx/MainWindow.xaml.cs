@@ -30,9 +30,17 @@ namespace RuntimeSDKTest
 
                 this.Loaded += (s, e) =>
                 {
-                    _navigationController = new TDxSpaceMouseNavigationController(MySceneView);
-                    _navigationController.Profile = Application.Current.MainWindow.Title;
-                    _navigationController.Enable = true;
+                    try
+                    {
+                        _navigationController = new TDxSpaceMouseNavigationController(MySceneView);
+                        _navigationController.Profile = Application.Current.MainWindow.Title;
+                        _navigationController.Enable = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Please install 3DxWare driver firstly.");
+                        System.Diagnostics.Debug.WriteLine(ex.ToString());
+                    }
                 };
             }
             catch (Exception ex)
