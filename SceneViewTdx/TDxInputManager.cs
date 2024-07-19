@@ -30,33 +30,28 @@ namespace SceneViewTdx
     /// </summary>
     public class TDxInputManager : IDisposable
     {
-        //is earth active
-        private static bool _isEarthActive = true;
         //camera manager
         private EarthCameraManager _earthCameraManager = null;
         //initialize instance
         private static readonly TDxInputManager s_inst = new();
-        //lock device
-        private readonly object _lockDevice = new();
 
         private Sensor _senser = null;
         private Device _device = null;
 
         //if altitude less than the value, will rotate; if not, move up or down
-        private readonly float _directInput_rotateXMaxAltitude = 2000000.0f;
+        private readonly float NAVIGATION_ROTATIONX_MAX_ALTITUDE = 2000000.0f;
         //no mouse navigator input max pitch value
-        private readonly float _directInput_PitchMaxValue = 90.0f;
+        private const float NAVIGATION_PITCH_MAX = 90.0f;
         //no mouse navigator input min pitch value
-        private readonly float _directInput_PitchMinValue = 0.0f;
+        private readonly float NAVIGATION_PITCH_MIN = 0.0f;
         //max angle delta at one update
-        private readonly float _directInput_AngleDeltaMaxValue = 0.6f;
+        private readonly float NAVIGATION_HEADING_DELTA_MAX = 0.6f;
         //max altitude
-        private readonly float _directInput_AltitudeMaxValue = 20000000.0f;
-        private readonly float _directInput_MaxMoveSpeedScale = 0.0f;
+        private readonly float NAVIGATION_ALTITUDE_MAX = 20000000.0f;
+        private readonly float NAVIGATION_TRANSLATE_SPEED_SCALE_MAX = 0.0f;
 
         private SceneView _sceneView = null;
         private bool _isEnabled = false;
-        private bool _isReversed = true;
         private float _moveSpeedFactor = 1.0f;
         private float _zoomSpeedFactor = 1.0f;
         private float _rotateXSpeedFactor = 1.0f;
@@ -66,12 +61,6 @@ namespace SceneViewTdx
         {
             get { return _isEnabled; }
             set { _isEnabled = value; }
-        }
-
-        public bool IsReversed
-        {
-            get { return _isReversed; }
-            set { _isReversed = value; }
         }
 
         public float MoveSpeedFactor
@@ -100,7 +89,7 @@ namespace SceneViewTdx
 
         protected TDxInputManager()
         {
-            _directInput_MaxMoveSpeedScale = (float)Math.Atan(_directInput_PitchMaxValue * Math.PI / 180.0) + 0.01f;
+            NAVIGATION_TRANSLATE_SPEED_SCALE_MAX = (float)Math.Atan(NAVIGATION_PITCH_MAX * Math.PI / 180.0) + 0.01f;
         }
 
         public static TDxInputManager GetInstance()
@@ -135,97 +124,60 @@ namespace SceneViewTdx
             }
         }
 
-
+        private bool _isNavigating = false;
         private void OnSensorInput()
         {
+            System.Diagnostics.Debug.WriteLine(string.Format("----rotation angle:{0}, translation length {1}", _senser.Rotation.Angle, _senser.Translation.Length));
+            
+            if (!_isNavigating)
+            {
+                _isNavigating = true;
+            }
+
             _earthCameraManager.Reset();
 
-            System.Diagnostics.Debug.WriteLine(string.Format("----rotation angle:{0}, translation length {1}", _senser.Rotation.Angle, _senser.Translation.Length));
+            RotateCamera();
 
-            bool translate = false;
-            if (_senser.Translation.Length > 100.0)
-            {
-                translate = true;
-            }
-            else if (_senser.Rotation.Angle <= 0.00001 && _senser.Translation.Length > 0.1)
-            {
-                translate = true;
-            }
-            
-            if (translate)
-            {
-                System.Diagnostics.Debug.WriteLine(string.Format("----translation:{0}, {1}, {2}", _senser.Translation.X, _senser.Translation.Y, _senser.Translation.Z));
+            TranslateCamera();
 
-                double xDelta = Math.Abs(_senser.Translation.X);
-                double yDelta = Math.Abs(_senser.Translation.Y);
-                double zDelta = Math.Abs(_senser.Translation.Z);
-                double maxOne = Math.Max(Math.Max(xDelta, yDelta), zDelta);
+            _earthCameraManager.Update();
+        }
 
-                if (Math.Abs(_senser.Translation.X) == maxOne)
-                {
-                    //compute distance you need to move
-                    double moveSpeed = GetMoveSpeed(_sceneView.Camera);
-                    double distance = _senser.Translation.X * moveSpeed;
-                    distance = _isReversed ? (-distance) : distance;
-                    _earthCameraManager.MoveLeftRight(distance);
-                }
-                else if (Math.Abs(_senser.Translation.Y) == maxOne)
-                {
-                    //compute distance you need to move
-                    double moveSpeed = GetMoveSpeed(_sceneView.Camera);
-                    double distance = -_senser.Translation.Y * moveSpeed;
-                    _earthCameraManager.MoveUpDown(distance);
-                } 
-                else if (Math.Abs(_senser.Translation.Z) == maxOne)
-                {
-                    //compute distance you need to zoom
-                    double zoomSpeed = GetZoomSpeed(_sceneView.Camera);
-                    double distance = _senser.Translation.Z * zoomSpeed;
-                    distance = _isReversed ? (-distance) : distance;
-                    _earthCameraManager.Zoom(distance, _directInput_AltitudeMaxValue);                    
-                }
-            }
-            else
+        private void RotateCamera() 
+        {
+            if (_senser.Rotation.Angle > 0.0)
             {
                 System.Diagnostics.Debug.WriteLine(string.Format("----rotation:{0}, {1}, {2}", _senser.Rotation.X, _senser.Rotation.Y, _senser.Rotation.Z));
 
-                double xRotation = Math.Abs(_senser.Rotation.X);
-                double yRotation = Math.Abs(_senser.Rotation.Y);
-                double zRotation = Math.Abs(_senser.Rotation.Z);
-                double maxOne = Math.Max(Math.Max(xRotation, yRotation), zRotation);
-
-                if (Math.Abs(_senser.Rotation.X) == maxOne)
+                if (Math.Abs(_senser.Rotation.X) > 0.0)
                 {
                     //compute angle you need to rotate
                     double rotateSpeed = GetRotateXSpeed(_sceneView.Camera);
                     double angleDelta = _senser.Rotation.X * rotateSpeed;
-                    //angleDelta = Math.Clamp(angleDelta, -_directInput_AngleDeltaMaxValue, _directInput_AngleDeltaMaxValue);
 
                     //default is rotate
                     bool bRotate = true;
-                    if (_sceneView.Camera.Pitch > _directInput_PitchMaxValue)
+                    if (_sceneView.Camera.Pitch > NAVIGATION_PITCH_MAX)
                     {
                         bRotate = angleDelta < 0 ? true : false;
                     }
-                    else if (_sceneView.Camera.Pitch < _directInput_PitchMinValue)
+                    else if (_sceneView.Camera.Pitch < NAVIGATION_PITCH_MIN)
                     {
                         bRotate = angleDelta < 0 ? false : true;
                     }
 
                     if (bRotate)
                     {
-                        angleDelta = _isReversed ? (-angleDelta) : angleDelta;
                         _earthCameraManager.RotateX(angleDelta);
                     }
                 }
-                else if (Math.Abs(_senser.Rotation.Z) == maxOne)
+
+                if (Math.Abs(_senser.Rotation.Z) > 0.0)
                 {
                     //compute angle you need to rotate
-                    var rotateSpeed = GetRotateZSpeed(_sceneView.Camera);
-                    double angleDelta = _senser.Rotation.Z * rotateSpeed;
-                    //angleDelta = Math.Clamp(angleDelta, -_directInput_AngleDeltaMaxValue, _directInput_AngleDeltaMaxValue);
-
-                    angleDelta = _isReversed ? (-angleDelta) : angleDelta;
+                    var rotateSpeed = GetRotateZSpeed();
+                    double angleDelta = -_senser.Rotation.Z * rotateSpeed;
+                    angleDelta = Math.Clamp(angleDelta, -NAVIGATION_HEADING_DELTA_MAX, NAVIGATION_HEADING_DELTA_MAX);
 
                     if (_sceneView.Camera.Location.Z < 5000)
                     {
@@ -237,8 +189,39 @@ namespace SceneViewTdx
                     }
                 }
             }
+        }
 
-            _earthCameraManager.Update();
+        private void TranslateCamera()
+        {
+            if (_senser.Translation.Length > 0)
+            {
+                System.Diagnostics.Debug.WriteLine(string.Format("----translation:{0}, {1}, {2}", _senser.Translation.X, _senser.Translation.Y, _senser.Translation.Z));
+
+                if (Math.Abs(_senser.Translation.X) > 0.0)
+                {
+                    //compute distance you need to move
+                    double moveSpeed = GetMoveSpeed(_sceneView.Camera);
+                    double distance = _senser.Translation.X * moveSpeed;
+                    _earthCameraManager.MoveLeftRight(distance);
+                }
+
+                if (Math.Abs(_senser.Translation.Y) > 0.0)
+                {
+                    //compute distance you need to move
+                    double moveSpeed = GetMoveSpeed(_sceneView.Camera);
+                    double distance = -_senser.Translation.Y * moveSpeed;
+                    _earthCameraManager.MoveUpDown(distance);
+                }
+                
+                
+                if (Math.Abs(_senser.Translation.Z) > 0.0)
+                {
+                    //compute distance you need to zoom
+                    double zoomSpeed = GetZoomSpeed(_sceneView.Camera);
+                    double distance = -_senser.Translation.Z * zoomSpeed;
+                    _earthCameraManager.Zoom(distance, NAVIGATION_ALTITUDE_MAX);
+                }
+            }
         }
 
         private void OnDeviceChange(int reserved)
@@ -254,7 +237,6 @@ namespace SceneViewTdx
 
         private void OnEarthDeactivated(object sender, EventArgs e)
         {
-            _isEarthActive = false;
             try
             {
                 try
@@ -274,7 +256,6 @@ namespace SceneViewTdx
 
         private void OnEarthActivated(object sender, EventArgs e)
         {
-            _isEarthActive = true;
             try
             {
                 _device?.Connect();
@@ -293,8 +274,8 @@ namespace SceneViewTdx
                 cameraElevation = 20;
             }
 
-            float fSpeedScale = _directInput_MaxMoveSpeedScale - (float)Math.Atan(camera.Pitch * Math.PI / 180);
-            return cameraElevation * _moveSpeedFactor * 0.0001f * fSpeedScale;
+            float fSpeedScale = NAVIGATION_TRANSLATE_SPEED_SCALE_MAX - (float)Math.Atan(camera.Pitch * Math.PI / 180);
+            return cameraElevation * _moveSpeedFactor * 0.0005f * fSpeedScale;
         }
 
         private float GetZoomSpeed(Camera camera)
@@ -305,21 +286,21 @@ namespace SceneViewTdx
                 cameraElevation = 1;
             }
 
-            float fSpeedScale = (float)(Math.Tan(cameraElevation * Math.PI / (_directInput_AltitudeMaxValue * 4))) + 0.3f;
+            float fSpeedScale = (float)(Math.Tan(cameraElevation * Math.PI / (NAVIGATION_ALTITUDE_MAX * 4))) + 0.3f;
             return cameraElevation * _zoomSpeedFactor * 0.00012f * fSpeedScale;
         }
 
         private float GetRotateXSpeed(Camera camera)
         {
             float cameraElevation = (float)camera.Location.Z;
-            float fScale = (cameraElevation > _directInput_rotateXMaxAltitude) ? 0.01f : 0.5f;
+            float fScale = (cameraElevation > NAVIGATION_ROTATIONX_MAX_ALTITUDE) ? 0.1f : 0.5f;
 
             return _rotateXSpeedFactor * fScale;
         }
 
-        private float GetRotateZSpeed(Camera camera)
+        private float GetRotateZSpeed()
         {
-            return _rotateZSpeedFactor * 0.4f;
+            return _rotateZSpeedFactor * 1.0f;
         }
 
         public void Dispose()
