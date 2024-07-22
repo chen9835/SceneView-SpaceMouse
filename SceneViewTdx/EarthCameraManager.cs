@@ -32,7 +32,7 @@ namespace SceneViewTdx
     {
         private readonly SceneView _sceneView = null;
         private Camera _camera = null;
-        private const float _earthCameraDefaultMaxAltitude = 20000000.0f;
+        public const float NAVIGATION_ALTITUDE_MAX = 58000000.0f;
 
         public EarthCameraManager(SceneView sceneView)
         {
@@ -100,7 +100,7 @@ namespace SceneViewTdx
         /// zoom in or out
         /// </summary>
         /// <param name="delta">delta</param>
-        public void Zoom(double delta, double maxAltitude = _earthCameraDefaultMaxAltitude)
+        public void Zoom(double delta, double maxAltitude = NAVIGATION_ALTITUDE_MAX)
         {
             var curCamera = _camera;
             MapPoint location = new(curCamera.Location.X, curCamera.Location.Y, curCamera.Location.Z - delta);

@@ -21,7 +21,7 @@ using System.Windows;
 using Esri.ArcGISRuntime.Mapping;
 using Esri.ArcGISRuntime.UI.Controls;
 
-using TDx.TDxInput;
+using TDxInput;
 
 namespace SceneViewTdx
 {
@@ -36,7 +36,7 @@ namespace SceneViewTdx
         private static readonly TDxInputManager s_inst = new();
 
         private Sensor _senser = null;
-        private Device _device = null;
+        private Device _device = null;        
 
         //if altitude less than the value, will rotate; if not, move up or down
         private readonly float NAVIGATION_ROTATIONX_MAX_ALTITUDE = 2000000.0f;
@@ -46,8 +46,6 @@ namespace SceneViewTdx
         private readonly float NAVIGATION_PITCH_MIN = 0.0f;
         //max angle delta at one update
         private readonly float NAVIGATION_HEADING_DELTA_MAX = 0.6f;
-        //max altitude
-        private readonly float NAVIGATION_ALTITUDE_MAX = 20000000.0f;
         private readonly float NAVIGATION_TRANSLATE_SPEED_SCALE_MAX = 0.0f;
 
         private SceneView _sceneView = null;
@@ -105,7 +103,7 @@ namespace SceneViewTdx
                 Application.Current.Activated += OnEarthActivated;
                 Application.Current.Deactivated += OnEarthDeactivated;
 
-                _device = new DeviceClass();
+                _device = new TDxInput.DeviceClass();
                 _device.Connect();
                 _device.DeviceChange += OnDeviceChange;
 
@@ -219,7 +217,7 @@ namespace SceneViewTdx
                     //compute distance you need to zoom
                     double zoomSpeed = GetZoomSpeed(_sceneView.Camera);
                     double distance = -_senser.Translation.Z * zoomSpeed;
-                    _earthCameraManager.Zoom(distance, NAVIGATION_ALTITUDE_MAX);
+                    _earthCameraManager.Zoom(distance);
                 }
             }
         }
@@ -286,8 +284,7 @@ namespace SceneViewTdx
                 cameraElevation = 1;
             }
 
-            float fSpeedScale = (float)(Math.Tan(cameraElevation * Math.PI / (NAVIGATION_ALTITUDE_MAX * 4))) + 0.3f;
-            return cameraElevation * _zoomSpeedFactor * 0.00012f * fSpeedScale;
+            return cameraElevation * _zoomSpeedFactor * 0.00012f;
         }
 
         private float GetRotateXSpeed(Camera camera)

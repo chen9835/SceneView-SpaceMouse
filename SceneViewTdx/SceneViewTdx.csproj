@@ -25,15 +25,21 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Esri.ArcGISRuntime" Version="200.4.0" />
-    <PackageReference Include="Esri.ArcGISRuntime.WPF" Version="200.4.0" />
-    <PackageReference Include="log4net" Version="2.0.12" />
+    <COMReference Include="TDxInput">
+      <VersionMinor>0</VersionMinor>
+      <VersionMajor>1</VersionMajor>
+      <Guid>7858b9e0-5793-4be4-9b53-661d922790d2</Guid>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>false</Isolated>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="TDx.TDxInput">
-      <HintPath>..\3rdLibrary\TDx.TDxInput.dll</HintPath>
-    </Reference>
+    <PackageReference Include="Esri.ArcGISRuntime" Version="200.4.0" />
+    <PackageReference Include="Esri.ArcGISRuntime.WPF" Version="200.4.0" />
+    <PackageReference Include="log4net" Version="2.0.12" />
   </ItemGroup>
 
 </Project>
